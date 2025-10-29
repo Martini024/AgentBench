@@ -4,7 +4,7 @@
 # detect-docker-host.sh
 # Portable helper to set DOCKER_HOST automatically across macOS/Linux/Colima/Docker Desktop
 #
-source ~/.zshrc
+eval "$(conda shell.bash hook)"
 set -e
 
 # Detect Docker socket and export DOCKER_HOST accordingly

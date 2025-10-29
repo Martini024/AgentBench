@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+eval "$(conda shell.bash hook)"
 conda create -n agent-bench python=3.9
 conda activate agent-bench
 pip install -r requirements.txt
