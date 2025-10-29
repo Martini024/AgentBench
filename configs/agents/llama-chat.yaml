@@ -1,13 +1,14 @@
 module: src.client.agents.HTTPAgent
 parameters:
-    url: https://api.openai.com/v1/chat/completions
+    url: http://localhost:11434/api/chat
     headers:
         Content-Type: application/json
-        Authorization: Bearer <% PUT-YOUR-OPENAI-KEY-HERE %>
     body:
+        model: llama3.2
+        stream: false
         temperature: 0
     prompter:
         name: role_content_dict
         args:
             agent_role: assistant
-    return_format: "{response[choices][0][message][content]}"
+    return_format: "{response[message][content]}"
