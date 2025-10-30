@@ -1,6 +1,6 @@
 module: src.client.agents.HTTPAgent
 parameters:
-    url: http://localhost:11434/api/chat
+    url: http://${HOST_IP:-localhost}:11434/api/chat
     headers:
         Content-Type: application/json
     body:

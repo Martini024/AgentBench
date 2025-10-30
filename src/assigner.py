@@ -1,29 +1,27 @@
+import contextlib
 import datetime
 import json
 import os
 import random
+import re
+import sys
 import threading
 import time
-from typing import Dict, List, Union
-from typing import Tuple, Callable, Iterator
-import contextlib
-import sys
-from tqdm.contrib import DummyTqdmFile
+from time import sleep
+from typing import Callable, Dict, Iterator, List, Tuple, Union
 
 import yaml
 from tqdm import tqdm
+from tqdm.contrib import DummyTqdmFile
 
 from src.client.task import TaskError
-from .client import TaskClient, AgentClient
+
+from .client import AgentClient, TaskClient
 from .configs import ConfigLoader
-from .typings import AssignmentConfig, SampleIndex, TaskOutput, TaskClientOutput
-from .utils import ColorMessage
-from .utils import Graph, MaxFlow
-from time import sleep
-import contextlib
-import sys
-from tqdm import tqdm
-from tqdm.contrib import DummyTqdmFile
+from .typings import (AssignmentConfig, SampleIndex, TaskClientOutput,
+                      TaskOutput)
+from .utils import ColorMessage, Graph, MaxFlow
+
 
 @contextlib.contextmanager
 def std_out_err_redirect_tqdm():
@@ -404,6 +402,18 @@ class Assigner:
         threading.Thread(target=worker_thread).start()
 
 
+def expand_env_vars(obj):
+    if isinstance(obj, dict):
+        return {k: expand_env_vars(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [expand_env_vars(v) for v in obj]
+    if isinstance(obj, str):
+        def repl(m):
+            var, default = m.group(1), (m.group(2) or "")
+            return os.getenv(var, default)
+        return re.compile(r"\$\{([^}:]+)(?::-(.*?))?\}").sub(repl, obj)
+    return obj
+
 if __name__ == "__main__":
     import argparse
 
@@ -418,6 +428,10 @@ if __name__ == "__main__":
 
     loader = ConfigLoader()
     config_ = loader.load_from(args.config)
+    config_ = expand_env_vars(config_)
+
+    print("HOST_IP", os.getenv("HOST_IP"))
+    
     value = AssignmentConfig.parse_obj(config_)
     value = AssignmentConfig.post_validate(value)
     v = value.dict()
