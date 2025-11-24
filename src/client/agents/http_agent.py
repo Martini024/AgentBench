@@ -3,10 +3,10 @@ import time
 import warnings
 
 import requests
-from urllib3.exceptions import InsecureRequestWarning
-
 from src.typings import *
 from src.utils import *
+from urllib3.exceptions import InsecureRequestWarning
+
 from ..agent import AgentClient
 
 old_merge_environment_settings = requests.Session.merge_environment_settings
@@ -179,6 +179,13 @@ class HTTPAgent(AgentClient):
         self.body = body or {}
         self.return_format = return_format
         self.prompter = Prompter.get_prompter(prompter)
+
+        self.last_usage = {
+            "prompt_tokens": 0,
+            "completion_tokens": 0,
+            "total_tokens": 0,
+        }
+
         if not self.url:
             raise Exception("Please set 'url' parameter")
 
@@ -209,7 +216,19 @@ class HTTPAgent(AgentClient):
                 print("Warning: ", e)
                 pass
             else:
-                resp = resp.json()
-                return self.return_format.format(response=resp)
+                data = resp.json()
+
+                # ---------- Extract Ollama token usage ----------
+                prompt = data.get("prompt_eval_count", 0) or 0
+                completion = data.get("eval_count", 0) or 0
+
+                self.last_usage = {
+                    "prompt_tokens": prompt,
+                    "completion_tokens": completion,
+                    "total_tokens": prompt + completion,
+                }
+
+                # ---------- Keep original string return ----------
+                return self.return_format.format(response=data)
             time.sleep(_ + 2)
         raise Exception("Failed.")

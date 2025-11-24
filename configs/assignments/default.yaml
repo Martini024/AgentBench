@@ -2,16 +2,16 @@ import: definition.yaml
 
 concurrency:
     task:
-        dbbench-std: 5
-        os-std: 5
+        dbbench-std: 6
+        os-std: 6
     agent:
-        deepseek-coder:6.7b: 5
+        deepseek-coder:6.7b: 6
 
 assignments: # List[Assignment] | Assignment
     - agent: # "task": List[str] | str ,  "agent": List[str] | str
           - deepseek-coder:6.7b
       task:
-          - dbbench-std
+          #   - dbbench-std
           - os-std
 
 output: "outputs/{TIMESTAMP}"

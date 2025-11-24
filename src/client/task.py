@@ -1,9 +1,9 @@
 import enum
 
 import requests
-
 from src.typings import *
 from src.utils import *
+
 from .agent import AgentClient
 
 
@@ -73,6 +73,7 @@ class TaskClient:
         while SampleStatus(result["output"]["status"]) == SampleStatus.RUNNING:
             try:
                 content = agent.inference(result["output"]["history"])
+                print("Usage:", agent.last_usage)
                 response = AgentOutput(content=content)
             except AgentContextLimitException:
                 response = AgentOutput(status=AgentOutputStatus.AGENT_CONTEXT_LIMIT)
@@ -122,7 +123,7 @@ class TaskClient:
             result = result.json()
             latest_result = result
         # TODO: check this type and check where history is
-        return TaskClientOutput(output=result["output"])
+        return TaskClientOutput(output=result["output"], usage=agent.last_usage)
 
     def calculate_overall(self, results: List[TaskOutput]) -> JSONSerializable:
         statistics = {s: 0 for s in SampleStatus}

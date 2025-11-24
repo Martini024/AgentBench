@@ -1,10 +1,10 @@
-from typing import Union, List
+from typing import List, Union
 
 from pydantic import BaseModel, root_validator
 
 from . import ChatHistoryItem
 from .general import JSONSerializable, SampleIndex
-from .status import SampleStatus, AgentOutputStatus
+from .status import AgentOutputStatus, SampleStatus
 
 
 class TaskOutput(BaseModel):
@@ -37,3 +37,4 @@ class TaskClientOutput(BaseModel):
     error: Union[str, None] = None
     info: Union[str, None] = None
     output: Union[TaskOutput, None] = None
+    usage: Union[dict, None] = None

@@ -11,10 +11,9 @@ from time import sleep
 from typing import Callable, Dict, Iterator, List, Tuple, Union
 
 import yaml
+from src.client.task import TaskError
 from tqdm import tqdm
 from tqdm.contrib import DummyTqdmFile
-
-from src.client.task import TaskError
 
 from .client import AgentClient, TaskClient
 from .configs import ConfigLoader
@@ -64,6 +63,11 @@ class Assigner:
         self.started_count = 0
         self.running_count = 0
 
+        self.usage_aggregate = {
+            "prompt_tokens": 0,
+            "completion_tokens": 0,
+            "total_tokens": 0,
+        }
         # Step 1. Check if output folder exists (resume or create)
 
         if not os.path.exists(self.config.output):
@@ -293,6 +297,18 @@ class Assigner:
             )
             + "\n"
         )
+
+        agg = getattr(self, "usage_aggregate", None)
+        if agg:
+            final_message += (
+                "\n"
+                + ColorMessage.yellow("Token Usage Summary:")
+                + "\n"
+                + f"   prompt_tokens:     {agg.get('prompt_tokens', 0)}\n"
+                + f"   completion_tokens: {agg.get('completion_tokens', 0)}\n"
+                + f"   total_tokens:      {agg.get('total_tokens', 0)}\n"
+            )
+            
         final_message += "============================================\n\n"
         print(final_message)
 
@@ -379,6 +395,14 @@ class Assigner:
             self.free_worker.agent[agent] += 1
             self.free_worker.task[task] += 1
             self.running_count -= 1
+
+        prompt = result.usage.get("prompt_tokens", 0) or 0
+        completion = result.usage.get("completion_tokens", 0) or 0
+        total = result.usage.get("total_tokens", 0) or 0
+
+        self.usage_aggregate["prompt_tokens"] += prompt
+        self.usage_aggregate["completion_tokens"] += completion
+        self.usage_aggregate["total_tokens"] += total
 
     def start_worker(
         self,
