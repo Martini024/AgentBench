@@ -3,9 +3,9 @@ import: definition.yaml
 concurrency:
     task:
         dbbench-std: 6
-        os-std: 6
+        os-std: 12
     agent:
-        deepseek-coder:6.7b: 6
+        deepseek-coder:6.7b: 12
 
 assignments: # List[Assignment] | Assignment
     - agent: # "task": List[str] | str ,  "agent": List[str] | str
