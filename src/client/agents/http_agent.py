@@ -184,6 +184,7 @@ class HTTPAgent(AgentClient):
             "prompt_tokens": 0,
             "completion_tokens": 0,
             "total_tokens": 0,
+            "retry_count": 0
         }
 
         if not self.url:
@@ -193,7 +194,7 @@ class HTTPAgent(AgentClient):
         return self.prompter(history)
 
     def inference(self, history: List[dict]) -> str:
-        for _ in range(3):
+        for attempt in range(3):
             try:
                 body = self.body.copy()
                 body.update(self._handle_history(history))
@@ -218,17 +219,27 @@ class HTTPAgent(AgentClient):
             else:
                 data = resp.json()
 
-                # ---------- Extract Ollama token usage ----------
-                prompt = data.get("prompt_eval_count", 0) or 0
-                completion = data.get("eval_count", 0) or 0
+                usage = data.get("usage") or {}
+
+                # OpenAI-style
+                prompt_tokens = usage.get("prompt_tokens")
+                completion_tokens = usage.get("completion_tokens")
+                total_tokens = usage.get("total_tokens")
+
+                # If not OpenAI-style, try Ollama fields as a fallback
+                if prompt_tokens is None and completion_tokens is None:
+                    prompt_tokens = data.get("prompt_eval_count", 0) or 0
+                    completion_tokens = data.get("eval_count", 0) or 0
+                    total_tokens = prompt_tokens + completion_tokens
 
                 self.last_usage = {
-                    "prompt_tokens": prompt,
-                    "completion_tokens": completion,
-                    "total_tokens": prompt + completion,
+                    "prompt_tokens": prompt_tokens,
+                    "completion_tokens": completion_tokens,
+                    "total_tokens": prompt_tokens + completion_tokens,
+                    "retry_count": attempt
                 }
 
                 # ---------- Keep original string return ----------
                 return self.return_format.format(response=data)
-            time.sleep(_ + 2)
+            time.sleep(attempt + 2)
         raise Exception("Failed.")

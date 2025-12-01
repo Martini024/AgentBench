@@ -67,6 +67,7 @@ class Assigner:
             "prompt_tokens": 0,
             "completion_tokens": 0,
             "total_tokens": 0,
+            "retry_count": 0
         }
         # Step 1. Check if output folder exists (resume or create)
 
@@ -307,6 +308,7 @@ class Assigner:
                 + f"   prompt_tokens:     {agg.get('prompt_tokens', 0)}\n"
                 + f"   completion_tokens: {agg.get('completion_tokens', 0)}\n"
                 + f"   total_tokens:      {agg.get('total_tokens', 0)}\n"
+                + f"   retry_count:      {agg.get('retry_count', 0)}\n"
             )
             
         final_message += "============================================\n\n"
@@ -399,10 +401,12 @@ class Assigner:
         prompt = result.usage.get("prompt_tokens", 0) or 0
         completion = result.usage.get("completion_tokens", 0) or 0
         total = result.usage.get("total_tokens", 0) or 0
+        retry = result.usage.get("retry_count", 0) or 0
 
         self.usage_aggregate["prompt_tokens"] += prompt
         self.usage_aggregate["completion_tokens"] += completion
         self.usage_aggregate["total_tokens"] += total
+        self.usage_aggregate["retry_count"] += retry
 
     def start_worker(
         self,
